@@ -1,35 +1,76 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export function Popup() {
-  const [count, setCount] = useState(0);
-  const [currentTab, setCurrentTab] = useState<chrome.tabs.Tab | null>(null);
+  const [timer, setTimer] = useState<number>(0);
+  const [startTime, setStartTime] = useState<number>(0);
+  const [accumulatedTime, setAccumulatedTime] = useState<number>(0);
+  const [isFocused, setIsFocused] = useState<boolean>(false);
 
   useEffect(() => {
-    // Load saved count from storage
-    chrome.storage.local.get(['count'], (result) => {
-      if (result.count) setCount(result.count);
-    });
+    let intervalFocused: number | undefined;
 
-    // Get current tab
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      setCurrentTab(tabs[0]);
-    });
-  }, []);
+    if (isFocused) {
+      intervalFocused = setInterval(() => {
+        const elapsed = (Date.now() - startTime) + accumulatedTime;
+        setTimer(elapsed);
+      }, 100);
+    }
 
-  const handleIncrement = () => {
-    const newCount = count + 1;
-    setCount(newCount);
-    chrome.storage.local.set({ count: newCount });
-  };
+    return () => {
+      if (intervalFocused) clearInterval(intervalFocused);
+    }
+  }, [isFocused])
+
+  const handleFocus = () => {
+    const _isFocused = !isFocused;
+
+    toggleFocusInternal(_isFocused);
+    changeButtonColor(_isFocused);
+
+    // Подключение таймера
+    if (_isFocused && startTime === 0) {
+      setStartTime(Date.now());
+    }
+    else if (!_isFocused) {
+      const currentTimer = timer;
+      setAccumulatedTime(currentTimer);
+      setStartTime(0);
+    }
+  }
+
+  const resetSession = () => {
+    setTimer(0);
+    setStartTime(0);
+    setAccumulatedTime(0);
+    toggleFocusInternal(false);
+    changeButtonColor(false);
+  }
+
+  // Цвет кнопки запуска
+  const changeButtonColor = (_isFocused: boolean) => {
+    const button = document.getElementById('powerOn');
+    if (button)
+      button.style.backgroundColor = _isFocused ? '#ffff' : '#dc143c';
+  }
+
+  // Внутреннее использование
+  const toggleFocusInternal = (_isFocused: boolean) => {
+    setIsFocused(_isFocused);
+    chrome.storage.local.set({ focus: _isFocused });
+  }
+
+  const hours = (Math.floor(timer / (60 * 60 * 1000))).toString().padStart(2, '0');
+  const minutes = (Math.floor(timer / (60 * 1000)) % 60).toString().padStart(2, '0');
+  const seconds = (Math.floor(timer / 1000) % 60).toString().padStart(2, '0');
 
   return (
-    <div style={{ width: '300px', padding: '20px' }}>
-      <h1>focus-watch</h1>
-      <p>Count: {count}</p>
-      <button onClick={handleIncrement}>Increment</button>
-      {currentTab && (
-        <p>Current tab: {currentTab.title}</p>
-      )}
+    <div className='container'>
+      <h1>Focus Watch</h1>
+      <p>Время сессии: {hours}:{minutes}:{seconds}</p>
+      <button id='powerOn' className='powerOn' onClick={handleFocus}>
+        <img src="/power.svg" width={1742 / 25} height={1920 / 25} />
+      </button>
+      <button onClick={resetSession}>Сбросить сессию</button>
     </div>
   );
 }
