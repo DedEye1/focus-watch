@@ -20,6 +20,15 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   return true;
 });
 
+async function sendToContentScript() {
+  const tabs = await chrome.tabs.query({ url: '*://*.youtube.com/*' });
+  for (const tab of tabs) {
+    if (tab.id) {
+      chrome.tabs.sendMessage(tab.id, { type: 'FOCUS_CHANGED', focusEnabled });
+    }
+  }
+}
+
 chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
   if (changeInfo.url && tab.active) {
     currentUrl = tab.url ?? '';
@@ -49,7 +58,17 @@ function toggleFocus() {
   } else {
     stopTimer();
   }
+  sendToContentScript();
   chrome.storage.local.set({ focusEnabled });
+}
+
+function reset() {
+  timer = 0;
+  accumulatedTime = 0;
+  focusEnabled = false;
+  if (intervalFocused) clearInterval(intervalFocused);
+  sendToContentScript();
+  chrome.storage.local.set({ timer, accumulatedTime, focusEnabled });
 }
 
 function startTimer() {
@@ -66,14 +85,6 @@ function stopTimer() {
     accumulatedTime = timer;
     chrome.storage.local.set({ accumulatedTime });
   }
-}
-
-function reset() {
-  timer = 0;
-  accumulatedTime = 0;
-  focusEnabled = false;
-  if (intervalFocused) clearInterval(intervalFocused);
-  chrome.storage.local.set({ timer, accumulatedTime, focusEnabled });
 }
 
 async function loadState() {
