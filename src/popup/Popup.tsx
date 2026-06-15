@@ -49,7 +49,7 @@ export function Popup() {
       <button
         id='powerOn' className='powerOn' onClick={toggleFocus} disabled={!isYouTube}
       >
-        <img src="/power.svg" width={1742 / 25} height={1920 / 25} />
+        <img src="/icons/power.svg" width={1742 / 25} height={1920 / 25} />
       </button>
       <button className='reset' onClick={resetSession}>Сбросить сессию</button>
 

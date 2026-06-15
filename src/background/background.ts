@@ -94,6 +94,8 @@ function reset() {
   if (intervalFocused) clearInterval(intervalFocused);
   sendFocusChanged();
   chrome.storage.local.set({ timer, accumulatedTime, focusEnabled });
+
+  chrome.action.setBadgeText({ text: undefined });
 }
 
 function startTimer() {
@@ -101,6 +103,7 @@ function startTimer() {
   intervalFocused = setInterval(() => {
     timer = (Date.now() - startTime) + accumulatedTime;
     chrome.storage.local.set({ timer });
+    setBadgeTime();
   }, 100);
 }
 
@@ -112,16 +115,23 @@ function stopTimer() {
   }
 }
 
+function setBadgeTime() {
+  let minutes = Math.floor(timer / (60 * 1000));
+  minutes = Math.min(minutes, 99);
+  const minutesStr = minutes.toString().padStart(2, '0');
+  const seconds = (Math.floor(timer / 1000) % 60).toString().padStart(2, '0');
+  chrome.action.setBadgeText({ text: `${minutesStr}:${seconds}` });
+}
+
 async function loadState() {
   const result = await chrome.storage.local.get(['timer', 'accumulatedTime', 'focusEnabled', 'disableAutoplayEnabled']);
   timer = Number(result.timer) || 0;
   accumulatedTime = Number(result.accumulatedTime) || 0;
   focusEnabled = Boolean(result.focusEnabled);
-  disableAutoplayEnabled = Boolean(result.disableAutoplayEnabled)
+  disableAutoplayEnabled = Boolean(result.disableAutoplayEnabled);
 
-  if (focusEnabled) {
-    startTimer();
-  }
+  if (timer !== 0) setBadgeTime();
+  if (focusEnabled) startTimer();
 }
 
 loadState();
