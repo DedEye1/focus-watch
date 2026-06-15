@@ -1,42 +1,63 @@
-let styleBase: HTMLStyleElement | null = null;
+let styleShorts: HTMLStyleElement | null = null;
+let styleRecs: HTMLStyleElement | null = null;
 let styleAutoplay: HTMLStyleElement | null = null;
 let observer: MutationObserver | null = null;
 
-function hideDistractions() {
-  if (styleBase) return;
+function hideShorts() {
+  if (styleShorts) return;
 
-  styleBase = document.createElement('style');
-  styleBase.id = 'focus-watch-hide';
-  styleBase.textContent = `
-    #secondary,
+  styleShorts = document.createElement('style');
+  styleShorts.id = 'focus-watch-hide';
+  styleShorts.textContent = `
     a[href*="/shorts/"],
     ytd-rich-section-renderer,
     ytd-reel-shelf-renderer,
     grid-shelf-view-model,
-    #comments,
     [title*="Shorts"],
     [tab-title*="Shorts"],
     [aria-label*="Shorts"] {
       display: none !important;
-    }
-  `;
-  document.head.appendChild(styleBase);
+      }
+      `;
+  document.head.appendChild(styleShorts);
 }
 
-function restoreDistractions() {
-  if (styleBase) {
-    styleBase.remove();
-    styleBase = null;
+function restoreShorts() {
+  if (styleShorts) {
+    styleShorts.remove();
+    styleShorts = null;
   }
   restoreAutoplay();
+  restoreRecs();
+}
+
+function hideRecs() {
+  if (styleRecs) return;
+
+  styleRecs = document.createElement('style');
+  styleRecs.id = 'recs-hide';
+  styleRecs.textContent = `
+    #comments,
+    #secondary {
+      display: none !important;
+    }
+  `;
+  document.head.appendChild(styleRecs);
+}
+
+function restoreRecs() {
+  if (styleRecs) {
+    styleRecs.remove();
+    styleRecs = null;
+  }
 }
 
 function startObserver() {
   if (observer) return;
 
   observer = new MutationObserver(() => {
-    if (styleBase && !document.getElementById('focus-watch-hide')) {
-      document.head.appendChild(styleBase);
+    if (styleShorts && !document.getElementById('focus-watch-hide')) {
+      document.head.appendChild(styleShorts);
     }
   });
   observer.observe(document.body, { childList: true, subtree: true });
@@ -82,11 +103,11 @@ chrome.runtime.onMessage.addListener((message) => {
   switch (message.type) {
     case 'FOCUS_CHANGED':
       if (message.focusEnabled) {
-        hideDistractions();
+        hideShorts();
         startObserver();
         if (message.disableAutoplayEnabled) disableAutoplay();
       } else {
-        restoreDistractions();
+        restoreShorts();
         stopObserver();
       }
       break;
@@ -94,15 +115,20 @@ chrome.runtime.onMessage.addListener((message) => {
       if (message.focusEnabled) disableAutoplay();
       if (!message.disableAutoplayEnabled) restoreAutoplay();
       break;
+    case 'RECS_CHANGED':
+      if (message.focusEnabled) hideRecs();
+      if (!message.hideRecsEnabled) restoreRecs();
+      break;
   }
 });
 
 async function init() {
   const response = await chrome.runtime.sendMessage({ type: 'GET_STATE' });
   if (response.focusEnabled) {
-    hideDistractions();
+    hideShorts();
     startObserver();
     if (response.disableAutoplayEnabled) disableAutoplay();
+    if (response.hideRecsEnabled) hideRecs();
   }
 }
 

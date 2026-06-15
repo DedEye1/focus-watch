@@ -4,6 +4,7 @@ export function Popup() {
   const [timer, setTimer] = useState<number>(0);
   const [isYouTube, setIsYouTube] = useState<boolean>();
   const [disableAutoplayEnabled, setAutoplayEnabled] = useState<boolean>();
+  const [hideRecsEnabled, setHideRecsEnabled] = useState<boolean>(true);
 
   useEffect(() => {
     let intervalFocused = setInterval(() => {
@@ -19,6 +20,7 @@ export function Popup() {
     changeButtonColor(response.focusEnabled);
     setIsYouTube(response.isYouTube);
     setAutoplayEnabled(response.disableAutoplayEnabled);
+    setHideRecsEnabled(response.hideRecsEnabled);
   };
 
   // Обработка нажатия на кнопку фокуса
@@ -29,6 +31,9 @@ export function Popup() {
 
   // Обработка нажатия на кнопку блокировки автовоспроизведения
   const toggleAutoplay = () => chrome.runtime.sendMessage({ type: 'TOGGLE_AUTOPLAY' });
+
+  // Обработка нажатия на кнопку скрытия рекомендаций
+  const toggleRecs = () => chrome.runtime.sendMessage({ type: 'TOGGLE_RECS' });
 
   // Цвет кнопки запуска
   const changeButtonColor = (isFocused: boolean) => {
@@ -56,6 +61,11 @@ export function Popup() {
       <label>
         <input type="checkbox" id="blockAuto" onChange={toggleAutoplay} checked={disableAutoplayEnabled} />
         Блокировать автоплей
+      </label>
+
+      <label>
+        <input type="checkbox" id="blockAuto" onChange={toggleRecs} checked={hideRecsEnabled} />
+        Скрыть рекомендации и комментарии
       </label>
     </div>
   );

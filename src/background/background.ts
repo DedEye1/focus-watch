@@ -4,11 +4,12 @@ let startTime = 0;
 let accumulatedTime = 0;
 let focusEnabled = false;
 let disableAutoplayEnabled = false;
+let hideRecsEnabled = true;
 let currentUrl = '';
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({
-    timer, accumulatedTime, focusEnabled, disableAutoplayEnabled
+    timer, accumulatedTime, focusEnabled, disableAutoplayEnabled, hideRecsEnabled
   });
 });
 
@@ -18,7 +19,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       toggleFocus();
       break;
     case 'GET_STATE':
-      sendResponse({ timer, focusEnabled, isYouTube: isYouTube(), disableAutoplayEnabled });
+      sendResponse({ timer, focusEnabled, isYouTube: isYouTube(), disableAutoplayEnabled, hideRecsEnabled });
       break;
     case 'RESET':
       reset();
@@ -26,24 +27,18 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     case 'TOGGLE_AUTOPLAY':
       toggleAutoplay();
       break;
+    case 'TOGGLE_RECS':
+      toggleRecs();
+      break;
   }
   return true;
 });
 
-async function sendFocusChanged() {
+async function sendStateChanged(messageType: string) {
   const tabs = await chrome.tabs.query({ url: '*://*.youtube.com/*' });
   for (const tab of tabs) {
     if (tab.id) {
-      chrome.tabs.sendMessage(tab.id, { type: 'FOCUS_CHANGED', focusEnabled, disableAutoplayEnabled });
-    }
-  }
-}
-
-async function sendAutoplayChanged() {
-  const tabs = await chrome.tabs.query({ url: '*://*.youtube.com/*' });
-  for (const tab of tabs) {
-    if (tab.id) {
-      chrome.tabs.sendMessage(tab.id, { type: 'AUTOPLAY_CHANGED', focusEnabled, disableAutoplayEnabled });
+      chrome.tabs.sendMessage(tab.id, { type: messageType, focusEnabled, disableAutoplayEnabled, hideRecsEnabled });
     }
   }
 }
@@ -85,14 +80,20 @@ function toggleFocus() {
   } else {
     stopTimer();
   }
-  sendFocusChanged();
+  sendStateChanged('FOCUS_CHANGED');
   chrome.storage.local.set({ focusEnabled });
 }
 
 function toggleAutoplay() {
   disableAutoplayEnabled = !disableAutoplayEnabled;
-  sendAutoplayChanged();
+  sendStateChanged('AUTOPLAY_CHANGED');
   chrome.storage.local.set({ disableAutoplayEnabled });
+}
+
+function toggleRecs() {
+  hideRecsEnabled = !hideRecsEnabled;
+  sendStateChanged('RECS_CHANGED');
+  chrome.storage.local.set({ hideRecsEnabled });
 }
 
 function reset() {
@@ -103,7 +104,9 @@ function reset() {
     clearInterval(intervalFocused);
     intervalFocused = undefined;
   }
-  sendFocusChanged();
+  sendStateChanged('FOCUS_CHANGED');
+  sendStateChanged('AUTOPLAY_CHANGED');
+  sendStateChanged('RECS_CHANGED');
   chrome.storage.local.set({ timer, accumulatedTime, focusEnabled });
 
   chrome.action.setBadgeText({ text: undefined });
@@ -138,11 +141,12 @@ function setBadgeTime() {
 }
 
 async function loadState() {
-  const result = await chrome.storage.local.get(['timer', 'accumulatedTime', 'focusEnabled', 'disableAutoplayEnabled']);
+  const result = await chrome.storage.local.get(['timer', 'accumulatedTime', 'focusEnabled', 'disableAutoplayEnabled', 'hideRecsEnabled']);
   timer = Number(result.timer) || 0;
   accumulatedTime = Number(result.accumulatedTime) || 0;
   focusEnabled = Boolean(result.focusEnabled);
   disableAutoplayEnabled = Boolean(result.disableAutoplayEnabled);
+  hideRecsEnabled = Boolean(result.hideRecsEnabled);
 
   if (timer !== 0) setBadgeTime();
   if (focusEnabled) startTimer();
