@@ -53,17 +53,25 @@ chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
     currentUrl = tab.url ?? '';
   }
   onLeavingYouTube();
+  onEnteringYouTube();
 });
 
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
   const tab = await chrome.tabs.get(activeInfo.tabId);
   currentUrl = tab.url ?? '';
   onLeavingYouTube();
+  onEnteringYouTube();
 });
+
+function onEnteringYouTube() {
+  if (isYouTube() && focusEnabled) {
+    startTimer();
+  }
+}
 
 function onLeavingYouTube() {
   if (!isYouTube() && focusEnabled)
-    toggleFocus();
+    stopTimer();
 }
 
 function isYouTube(): boolean {
@@ -91,7 +99,10 @@ function reset() {
   timer = 0;
   accumulatedTime = 0;
   focusEnabled = false;
-  if (intervalFocused) clearInterval(intervalFocused);
+  if (intervalFocused) {
+    clearInterval(intervalFocused);
+    intervalFocused = undefined;
+  }
   sendFocusChanged();
   chrome.storage.local.set({ timer, accumulatedTime, focusEnabled });
 
@@ -99,10 +110,12 @@ function reset() {
 }
 
 function startTimer() {
+  if (intervalFocused) return;
+
   startTime = Date.now();
   intervalFocused = setInterval(() => {
     timer = (Date.now() - startTime) + accumulatedTime;
-    chrome.storage.local.set({ timer });
+    chrome.storage.local.set({ timer, startTime, accumulatedTime });
     setBadgeTime();
   }, 100);
 }
@@ -110,8 +123,9 @@ function startTimer() {
 function stopTimer() {
   if (intervalFocused) {
     clearInterval(intervalFocused);
+    intervalFocused = undefined;
     accumulatedTime = timer;
-    chrome.storage.local.set({ accumulatedTime });
+    chrome.storage.local.set({ timer, startTime, accumulatedTime });
   }
 }
 
