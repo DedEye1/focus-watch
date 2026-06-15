@@ -3,7 +3,14 @@ let timer = 0;
 let startTime = 0;
 let accumulatedTime = 0;
 let focusEnabled = false;
+let disableAutoplayEnabled = false;
 let currentUrl = '';
+
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.storage.local.set({
+    timer, accumulatedTime, focusEnabled, disableAutoplayEnabled
+  });
+});
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   switch (message.type) {
@@ -11,20 +18,32 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       toggleFocus();
       break;
     case 'GET_STATE':
-      sendResponse({ timer, focusEnabled, isYouTube: isYouTube() });
+      sendResponse({ timer, focusEnabled, isYouTube: isYouTube(), disableAutoplayEnabled });
       break;
     case 'RESET':
       reset();
+      break;
+    case 'TOGGLE_AUTOPLAY':
+      toggleAutoplay();
       break;
   }
   return true;
 });
 
-async function sendToContentScript() {
+async function sendFocusChanged() {
   const tabs = await chrome.tabs.query({ url: '*://*.youtube.com/*' });
   for (const tab of tabs) {
     if (tab.id) {
-      chrome.tabs.sendMessage(tab.id, { type: 'FOCUS_CHANGED', focusEnabled });
+      chrome.tabs.sendMessage(tab.id, { type: 'FOCUS_CHANGED', focusEnabled, disableAutoplayEnabled });
+    }
+  }
+}
+
+async function sendAutoplayChanged() {
+  const tabs = await chrome.tabs.query({ url: '*://*.youtube.com/*' });
+  for (const tab of tabs) {
+    if (tab.id) {
+      chrome.tabs.sendMessage(tab.id, { type: 'AUTOPLAY_CHANGED', focusEnabled, disableAutoplayEnabled });
     }
   }
 }
@@ -58,8 +77,14 @@ function toggleFocus() {
   } else {
     stopTimer();
   }
-  sendToContentScript();
+  sendFocusChanged();
   chrome.storage.local.set({ focusEnabled });
+}
+
+function toggleAutoplay() {
+  disableAutoplayEnabled = !disableAutoplayEnabled;
+  sendAutoplayChanged();
+  chrome.storage.local.set({ disableAutoplayEnabled });
 }
 
 function reset() {
@@ -67,7 +92,7 @@ function reset() {
   accumulatedTime = 0;
   focusEnabled = false;
   if (intervalFocused) clearInterval(intervalFocused);
-  sendToContentScript();
+  sendFocusChanged();
   chrome.storage.local.set({ timer, accumulatedTime, focusEnabled });
 }
 
@@ -88,10 +113,11 @@ function stopTimer() {
 }
 
 async function loadState() {
-  const result = await chrome.storage.local.get(['timer', 'accumulatedTime', 'focusEnabled']);
+  const result = await chrome.storage.local.get(['timer', 'accumulatedTime', 'focusEnabled', 'disableAutoplayEnabled']);
   timer = Number(result.timer) || 0;
   accumulatedTime = Number(result.accumulatedTime) || 0;
-  focusEnabled = Boolean(result.focusEnabled) || false;
+  focusEnabled = Boolean(result.focusEnabled);
+  disableAutoplayEnabled = Boolean(result.disableAutoplayEnabled)
 
   if (focusEnabled) {
     startTimer();

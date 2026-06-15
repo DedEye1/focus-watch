@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 export function Popup() {
   const [timer, setTimer] = useState<number>(0);
   const [isYouTube, setIsYouTube] = useState<boolean>();
+  const [disableAutoplayEnabled, setAutoplayEnabled] = useState<boolean>();
 
   useEffect(() => {
     let intervalFocused = setInterval(() => {
@@ -17,13 +18,17 @@ export function Popup() {
     setTimer(response.timer);
     changeButtonColor(response.focusEnabled);
     setIsYouTube(response.isYouTube);
+    setAutoplayEnabled(response.disableAutoplayEnabled);
   };
 
-  // Обработка нажатия на кнопку
+  // Обработка нажатия на кнопку фокуса
   const toggleFocus = () => chrome.runtime.sendMessage({ type: 'TOGGLE_FOCUS' });
 
   // Сброс сессии
   const resetSession = () => chrome.runtime.sendMessage({ type: 'RESET' });
+
+  // Обработка нажатия на кнопку блокировки автовоспроизведения
+  const toggleAutoplay = () => chrome.runtime.sendMessage({ type: 'TOGGLE_AUTOPLAY' });
 
   // Цвет кнопки запуска
   const changeButtonColor = (isFocused: boolean) => {
@@ -41,13 +46,17 @@ export function Popup() {
     <div className='container'>
       <h1>Focus Watch</h1>
       <p>Время сессии: {hours}:{minutes}:{seconds}</p>
-      <p>{isYouTube ? 'yes' : 'no'}</p>
       <button
         id='powerOn' className='powerOn' onClick={toggleFocus} disabled={!isYouTube}
       >
         <img src="/power.svg" width={1742 / 25} height={1920 / 25} />
       </button>
       <button className='reset' onClick={resetSession}>Сбросить сессию</button>
+
+      <label>
+        <input type="checkbox" id="blockAuto" onChange={toggleAutoplay} checked={disableAutoplayEnabled} />
+        Блокировать автоплей
+      </label>
     </div>
   );
 }
