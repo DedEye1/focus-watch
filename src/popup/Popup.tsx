@@ -4,7 +4,16 @@ export function Popup() {
   const [timer, setTimer] = useState<number>(0);
   const [isYouTube, setIsYouTube] = useState<boolean>();
   const [disableAutoplayEnabled, setAutoplayEnabled] = useState<boolean>();
-  const [hideRecsEnabled, setHideRecsEnabled] = useState<boolean>(true);
+  const [hideRecsEnabled, setHideRecsEnabled] = useState<boolean>();
+  const [darkTheme, setTheme] = useState<boolean>();
+
+  useEffect(() => {
+    if (darkTheme) {
+      document.body.classList.add('dark-theme');
+    } else {
+      document.body.classList.remove('dark-theme');
+    }
+  }, [darkTheme])
 
   useEffect(() => {
     let intervalFocused = setInterval(() => {
@@ -21,6 +30,7 @@ export function Popup() {
     setIsYouTube(response.isYouTube);
     setAutoplayEnabled(response.disableAutoplayEnabled);
     setHideRecsEnabled(response.hideRecsEnabled);
+    setTheme(response.darkTheme);
   };
 
   // Обработка нажатия на кнопку фокуса
@@ -38,9 +48,15 @@ export function Popup() {
   // Цвет кнопки запуска
   const changeButtonColor = (isFocused: boolean) => {
     const button = document.getElementById('powerOn');
-    if (button)
-      button.style.backgroundColor = isFocused ? '#ffffff' : '#dc143c';
+    if (button) {
+      const style = getComputedStyle(document.body);
+      const bColor = style.getPropertyValue('--b-color').trim();
+      const bColorSelected = style.getPropertyValue('--b-color-selected').trim();
+      button.style.backgroundColor = isFocused ? bColorSelected : bColor;
+    }
   }
+
+  const switchTheme = () => chrome.runtime.sendMessage({ type: 'TOGGLE_THEME' });
 
   // Время работы
   const hours = (Math.floor(timer / (60 * 60 * 1000))).toString().padStart(2, '0');
@@ -49,13 +65,22 @@ export function Popup() {
 
   return (
     <div className='container'>
-      <h1>Focus Watch</h1>
+      <div className='title'>
+        <h1>Focus Watch</h1>
+
+        <button className='theme' onClick={switchTheme}>
+          {darkTheme ? '☀︎' : '☾'}
+        </button>
+      </div>
+
       <p>Время сессии: {hours}:{minutes}:{seconds}</p>
+
       <button
         id='powerOn' className='powerOn' onClick={toggleFocus} disabled={!isYouTube}
       >
-        <img src="/icons/power.svg" width={1742 / 25} height={1920 / 25} />
+        ⏻
       </button>
+
       <button className='reset' onClick={resetSession}>Сбросить сессию</button>
 
       <label>
@@ -64,7 +89,7 @@ export function Popup() {
       </label>
 
       <label>
-        <input type="checkbox" id="blockAuto" onChange={toggleRecs} checked={hideRecsEnabled} />
+        <input type="checkbox" id="toggleRecs" onChange={toggleRecs} checked={hideRecsEnabled} />
         Скрыть рекомендации и комментарии
       </label>
     </div>

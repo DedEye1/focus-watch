@@ -22,7 +22,7 @@ function hideShorts() {
   document.head.appendChild(styleShorts);
 }
 
-function restoreShorts() {
+function restoreFully() {
   if (styleShorts) {
     styleShorts.remove();
     styleShorts = null;
@@ -106,8 +106,9 @@ chrome.runtime.onMessage.addListener((message) => {
         hideShorts();
         startObserver();
         if (message.disableAutoplayEnabled) disableAutoplay();
+        if (message.hideRecsEnabled) hideRecs();
       } else {
-        restoreShorts();
+        restoreFully();
         stopObserver();
       }
       break;

@@ -1,12 +1,25 @@
+:root {
+    --bg-color: #f7f7f7;
+    --text-color: #2d2d2d;
+    --b-text-color: #2d2d2d;
+    --b-color: #dc143c;
+    --b-color-selected: #c7c7c7;
+}
+
+body.dark-theme {
+    --bg-color: #2d2d2d;
+    --text-color: #efefef;
+}
+
 * {
     margin-left: auto;
     margin-right: auto;
     text-align: center;
-    color: white;
+    color: var(--text-color);
 }
 
 body {
-    background-color: #2d2d2d;
+    background-color: var(--bg-color);
 }
 
 p {
@@ -14,23 +27,43 @@ p {
 }
 
 .container {
-    width: 150px;
+    width: 190px;
     margin: 10px;
 }
 
 button {
-    background-color: crimson;
+    background-color: var(--b-color);
     border: 0px;
     display: block;
     border-radius: 10%;
     margin-bottom: 20px;
-    color: black;
+    color: var(--b-text-color);
 }
 
 .reset:active {
-    background-color: white;
+    background-color: var(--b-color-selected);
+}
+
+label {
+    display: block;
+}
+
+.title {
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+}
+
+.theme {
+    margin-right: 0;
+    line-height: 30px;
+    font-size: 15pt;
+    margin-bottom: 0;
+    border-radius: 100%;
 }
 
 .powerOn {
+    line-height: 75px;
+    font-size: 100px;
     border-radius: 100%;
 }
