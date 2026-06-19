@@ -8,10 +8,22 @@ let showRecsEnabled = false;
 let currentUrl = '';
 let darkTheme = true;
 
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.set({
-    timer, accumulatedTime, focusEnabled, disableAutoplayEnabled, showRecsEnabled, darkTheme
-  });
+chrome.runtime.onInstalled.addListener(async () => {
+  const result = await chrome.storage.local.get([
+    'timer', 'accumulatedTime', 'focusEnabled',
+    'disableAutoplayEnabled', 'showRecsEnabled', 'darkTheme'
+  ]);
+
+  if (Object.keys(result).length === 0) {
+    await chrome.storage.local.set({
+      timer: 0,
+      accumulatedTime: 0,
+      focusEnabled: false,
+      disableAutoplayEnabled: false,
+      showRecsEnabled: false,
+      darkTheme: false
+    });
+  }
 });
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
