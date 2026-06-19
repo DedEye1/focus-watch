@@ -106,7 +106,7 @@ chrome.runtime.onMessage.addListener((message) => {
         hideShorts();
         startObserver();
         if (message.disableAutoplayEnabled) disableAutoplay();
-        if (message.hideRecsEnabled) hideRecs();
+        if (!message.showRecsEnabled) hideRecs();
       } else {
         restoreFully();
         stopObserver();
@@ -118,7 +118,7 @@ chrome.runtime.onMessage.addListener((message) => {
       break;
     case 'RECS_CHANGED':
       if (message.focusEnabled) hideRecs();
-      if (!message.hideRecsEnabled) restoreRecs();
+      if (message.showRecsEnabled) restoreRecs();
       break;
   }
 });
@@ -129,7 +129,7 @@ async function init() {
     hideShorts();
     startObserver();
     if (response.disableAutoplayEnabled) disableAutoplay();
-    if (response.hideRecsEnabled) hideRecs();
+    if (!response.showRecsEnabled) hideRecs();
   }
 }
 

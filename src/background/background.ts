@@ -4,13 +4,13 @@ let startTime = 0;
 let accumulatedTime = 0;
 let focusEnabled = false;
 let disableAutoplayEnabled = false;
-let hideRecsEnabled = true;
+let showRecsEnabled = false;
 let currentUrl = '';
 let darkTheme = true;
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({
-    timer, accumulatedTime, focusEnabled, disableAutoplayEnabled, hideRecsEnabled, darkTheme
+    timer, accumulatedTime, focusEnabled, disableAutoplayEnabled, showRecsEnabled, darkTheme
   });
 });
 
@@ -20,7 +20,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       toggleFocus();
       break;
     case 'GET_STATE':
-      sendResponse({ timer, focusEnabled, isYouTube: isYouTube(), disableAutoplayEnabled, hideRecsEnabled, darkTheme });
+      sendResponse({ timer, focusEnabled, isYouTube: isYouTube(), disableAutoplayEnabled, showRecsEnabled, darkTheme });
       break;
     case 'RESET':
       reset();
@@ -42,7 +42,7 @@ async function sendStateChanged(messageType: string) {
   const tabs = await chrome.tabs.query({ url: '*://*.youtube.com/*' });
   for (const tab of tabs) {
     if (tab.id) {
-      chrome.tabs.sendMessage(tab.id, { type: messageType, focusEnabled, disableAutoplayEnabled, hideRecsEnabled });
+      chrome.tabs.sendMessage(tab.id, { type: messageType, focusEnabled, disableAutoplayEnabled, showRecsEnabled });
     }
   }
 }
@@ -95,9 +95,9 @@ function toggleAutoplay() {
 }
 
 function toggleRecs() {
-  hideRecsEnabled = !hideRecsEnabled;
+  showRecsEnabled = !showRecsEnabled;
   sendStateChanged('RECS_CHANGED');
-  chrome.storage.local.set({ hideRecsEnabled });
+  chrome.storage.local.set({ showRecsEnabled });
 }
 
 function reset() {
@@ -145,12 +145,12 @@ function setBadgeTime() {
 }
 
 async function loadState() {
-  const result = await chrome.storage.local.get(['timer', 'accumulatedTime', 'focusEnabled', 'disableAutoplayEnabled', 'hideRecsEnabled', 'darkTheme']);
+  const result = await chrome.storage.local.get(['timer', 'accumulatedTime', 'focusEnabled', 'disableAutoplayEnabled', 'showRecsEnabled', 'darkTheme']);
   timer = Number(result.timer) || 0;
   accumulatedTime = Number(result.accumulatedTime) || 0;
   focusEnabled = Boolean(result.focusEnabled);
   disableAutoplayEnabled = Boolean(result.disableAutoplayEnabled);
-  hideRecsEnabled = Boolean(result.hideRecsEnabled);
+  showRecsEnabled = Boolean(result.showRecsEnabled);
   darkTheme = Boolean(result.darkTheme);
 
   if (timer !== 0) setBadgeTime();

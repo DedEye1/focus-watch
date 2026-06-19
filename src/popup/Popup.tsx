@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 export function Popup() {
   const [timer, setTimer] = useState<number>(0);
   const [disableAutoplayEnabled, setAutoplayEnabled] = useState<boolean>();
-  const [hideRecsEnabled, setHideRecsEnabled] = useState<boolean>();
+  const [showRecsEnabled, setShowRecsEnabled] = useState<boolean>();
   const [darkTheme, setTheme] = useState<boolean>();
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export function Popup() {
     setTimer(response.timer);
     changeButtonColor(response.focusEnabled);
     setAutoplayEnabled(response.disableAutoplayEnabled);
-    setHideRecsEnabled(response.hideRecsEnabled);
+    setShowRecsEnabled(response.showRecsEnabled);
     setTheme(response.darkTheme);
   };
 
@@ -87,8 +87,8 @@ export function Popup() {
       </label>
 
       <label>
-        <input type="checkbox" id="toggleRecs" onChange={toggleRecs} checked={hideRecsEnabled} />
-        Скрыть рекомендации и комментарии
+        <input type="checkbox" id="toggleRecs" onChange={toggleRecs} checked={showRecsEnabled} />
+        Показать рекомендации и комментарии
       </label>
     </div>
   );
