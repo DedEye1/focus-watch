@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 
 export function Popup() {
   const [timer, setTimer] = useState<number>(0);
-  const [isYouTube, setIsYouTube] = useState<boolean>();
   const [disableAutoplayEnabled, setAutoplayEnabled] = useState<boolean>();
   const [hideRecsEnabled, setHideRecsEnabled] = useState<boolean>();
   const [darkTheme, setTheme] = useState<boolean>();
@@ -27,7 +26,6 @@ export function Popup() {
     const response = await chrome.runtime.sendMessage({ type: 'GET_STATE' });
     setTimer(response.timer);
     changeButtonColor(response.focusEnabled);
-    setIsYouTube(response.isYouTube);
     setAutoplayEnabled(response.disableAutoplayEnabled);
     setHideRecsEnabled(response.hideRecsEnabled);
     setTheme(response.darkTheme);
@@ -76,7 +74,7 @@ export function Popup() {
       <p>Время сессии: {hours}:{minutes}:{seconds}</p>
 
       <button
-        id='powerOn' className='powerOn' onClick={toggleFocus} disabled={!isYouTube}
+        id='powerOn' className='powerOn' onClick={toggleFocus}
       >
         ⏻
       </button>

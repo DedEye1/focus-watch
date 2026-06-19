@@ -117,7 +117,7 @@ function reset() {
 }
 
 function startTimer() {
-  if (intervalFocused) return;
+  if (intervalFocused || !isYouTube()) return;
 
   startTime = Date.now();
   intervalFocused = setInterval(() => {
