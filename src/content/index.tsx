@@ -10,7 +10,7 @@ function hideShorts() {
   styleShorts.id = 'focus-watch-hide';
   styleShorts.textContent = `
     a[href*="/shorts/"],
-    ytd-rich-section-renderer,
+    ytd-rich-shelf-renderer,
     ytd-reel-shelf-renderer,
     grid-shelf-view-model,
     [title*="Shorts"],
