@@ -2,6 +2,7 @@ let styleShorts: HTMLStyleElement | null = null;
 let styleRecs: HTMLStyleElement | null = null;
 let styleAutoplay: HTMLStyleElement | null = null;
 let observer: MutationObserver | null = null;
+let autoplayObserver: MutationObserver | null = null;
 
 function hideShorts() {
   if (styleShorts) return;
@@ -38,7 +39,8 @@ function hideRecs() {
   styleRecs.id = 'recs-hide';
   styleRecs.textContent = `
     #comments,
-    #secondary {
+    #secondary,
+    #related {
       display: none !important;
     }
   `;
@@ -68,6 +70,32 @@ function stopObserver() {
     observer.disconnect();
     observer = null;
   }
+}
+
+function startAutoplayObserver() {
+  if (autoplayObserver) return;
+
+  disableAutoplay();
+  handleCancelBtn();
+
+  autoplayObserver = new MutationObserver(() => {
+    disableAutoplay();
+    handleCancelBtn();
+  });
+  autoplayObserver.observe(document.body, { childList: true, subtree: true })
+}
+
+function stopAutoplayObserver() {
+  restoreAutoplay();
+  if (autoplayObserver) {
+    autoplayObserver.disconnect();
+    autoplayObserver = null;
+  }
+}
+
+function handleCancelBtn() {
+  const cancelButton = document.querySelector<HTMLButtonElement>('button[class="ytp-autonav-endscreen-upnext-cancel-button"]');
+  if (cancelButton) cancelButton.click();
 }
 
 function disableAutoplay() {
@@ -105,16 +133,18 @@ chrome.runtime.onMessage.addListener((message) => {
       if (message.focusEnabled) {
         hideShorts();
         startObserver();
-        if (message.disableAutoplayEnabled) disableAutoplay();
+        if (message.disableAutoplayEnabled) startAutoplayObserver();
+        else stopAutoplayObserver();
         if (!message.showRecsEnabled) hideRecs();
       } else {
         restoreFully();
+        stopAutoplayObserver();
         stopObserver();
       }
       break;
     case 'AUTOPLAY_CHANGED':
-      if (message.focusEnabled) disableAutoplay();
-      if (!message.disableAutoplayEnabled) restoreAutoplay();
+      if (message.focusEnabled) startAutoplayObserver();
+      if (!message.disableAutoplayEnabled) stopAutoplayObserver();
       break;
     case 'RECS_CHANGED':
       if (message.focusEnabled) hideRecs();
@@ -128,7 +158,7 @@ async function init() {
   if (response.focusEnabled) {
     hideShorts();
     startObserver();
-    if (response.disableAutoplayEnabled) disableAutoplay();
+    if (response.disableAutoplayEnabled) startAutoplayObserver();
     if (!response.showRecsEnabled) hideRecs();
   }
 }

@@ -21,7 +21,7 @@
         "*://*.youtube.com/*"
       ],
       "js": [
-        "src/content/index.tsx"
+        "src/content/index.ts"
       ]
     }
   ],
@@ -33,15 +33,5 @@
   "permissions": [
     "storage",
     "tabs"
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "src/content/index.tsx"
-      ],
-      "matches": [
-        "<all_urls>"
-      ]
-    }
   ]
 }
