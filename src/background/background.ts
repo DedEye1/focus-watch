@@ -33,6 +33,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       break;
     case 'TOGGLE_THEME':
       darkTheme = !darkTheme;
+      chrome.storage.local.set({ darkTheme });
       break;
   }
   return true;
